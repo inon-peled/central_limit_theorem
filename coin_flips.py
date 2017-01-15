@@ -1,6 +1,7 @@
 import functools
 import random
 import itertools
+import collections
 import matplotlib.pyplot as plt
 
 
@@ -9,15 +10,13 @@ def flip(num_flips):
 
 
 def distribution_num_heads(num_samples, num_flips_per_sample):
-    dist = [0] * (num_flips_per_sample + 1)
-    for i in range(num_samples):
-        dist[sum(flip(num_flips_per_sample))] += 1
-    return dist
+    flips = map(sum(flip(num_flips_per_sample), range(num_samples)))
+    return collections.Counter(flips)
 
 
 def delimit(sequence_of_ones_and_zeros):
     t = itertools.tee(sequence_of_ones_and_zeros)
-    z = zip(t[0], itertools.islice(t[1], 1, None))
+    z = itertools.zip_longest(t[0], itertools.islice(t[1], 1, None))
     return map(lambda pair: pair[0],
                filter(lambda pair: pair[1][0] != pair[1][1], enumerate(z)))
 
@@ -50,5 +49,5 @@ def experiment_and_plot(distribution_function, num_samples, num_flips_per_sample
 
 
 if __name__ == '__main__':
-    # print(list(delimit('11100110000')))
+    print(list(delimit('11100110000')))
     experiment_and_plot(distribution_average_repeated_result_length, 100000, 100)
