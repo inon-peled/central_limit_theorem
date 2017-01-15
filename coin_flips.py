@@ -10,7 +10,7 @@ def flip(num_flips):
 
 
 def distribution_num_heads(num_samples, num_flips_per_sample):
-    flips = map(sum(flip(num_flips_per_sample), range(num_samples)))
+    flips = map(lambda x: sum(flip(num_flips_per_sample)), range(num_samples))
     return collections.Counter(flips)
 
 
@@ -22,8 +22,7 @@ def delimit(sequence_of_ones_and_zeros):
 
 
 def distribution_average_repeated_result_length(num_samples, num_flips_per_sample):
-    dist = [0] * ((num_flips_per_sample + 1) * 100)
-    for i in range(num_samples):
+    def avg():
         flips = flip(num_flips_per_sample)
         d1, d2 = itertools.tee(delimit(flips))
         lengths = itertools.starmap(lambda start, end: end - start,
@@ -34,20 +33,22 @@ def distribution_average_repeated_result_length(num_samples, num_flips_per_sampl
             enumerate(lengths),
             (0, 0.0)
         )[1]
-        dist[round(avg_length * 100)] += 1
-    return dist
+        return avg_length
+    return collections.Counter(
+        map(lambda x: round(avg() * 100), range(num_samples)))
 
 
 def experiment_and_plot(distribution_function, num_samples, num_flips_per_sample):
-    dist = list(distribution_function(num_samples, num_flips_per_sample))
-    open('dist.csv', 'w').write('\n'.join(map(str, enumerate(dist))) + '\n')
-    dist_non_zero = list(filter(lambda i_v: i_v[1] != 0, enumerate(dist)))
-    min_x, max_x = dist_non_zero[0][0], dist_non_zero[-1][0]
-    print(min_x, max_x)
-    plt.bar(range(min_x, max_x + 1), dist[min_x:max_x + 1], log=True)
+    dist = distribution_function(num_samples, num_flips_per_sample)
+    open('dist.csv', 'w').write(str(dist))
+    x_values = list(range(min(dist), max(dist) + 1))
+    plt.bar(
+        x_values,
+        list(map(lambda x: dist[x], x_values)),
+        log=True)
     plt.savefig('dist.png')
 
 
 if __name__ == '__main__':
-    print(list(delimit('11100110000')))
+    # print(list(delimit('11100110000')))
     experiment_and_plot(distribution_average_repeated_result_length, 100000, 100)
